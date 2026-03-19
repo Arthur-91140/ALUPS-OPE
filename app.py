@@ -413,10 +413,12 @@ class PrefixMiddleware:
         self.prefix = prefix
 
     def __call__(self, environ, start_response):
+        # Si nginx a deja strippe le prefixe, on le remet dans SCRIPT_NAME
+        environ["SCRIPT_NAME"] = self.prefix
         path = environ.get("PATH_INFO", "")
+        # Si le prefixe est encore dans PATH_INFO, le retirer
         if path.startswith(self.prefix):
             environ["PATH_INFO"] = path[len(self.prefix):] or "/"
-            environ["SCRIPT_NAME"] = self.prefix
         return self.app(environ, start_response)
 
 
