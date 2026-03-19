@@ -523,6 +523,38 @@ def connexion():
     return render_template("connexion.html")
 
 
+@app.route("/mot-de-passe", methods=["GET", "POST"])
+@login_required
+def mot_de_passe():
+    if request.method == "POST":
+        ancien = request.form.get("ancien", "")
+        nouveau = request.form.get("nouveau", "")
+        nouveau2 = request.form.get("nouveau2", "")
+
+        db = get_db()
+        user = db.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)).fetchone()
+
+        if not check_password_hash(user["password_hash"], ancien):
+            flash("Ancien mot de passe incorrect.", "danger")
+            return render_template("mot_de_passe.html")
+        if not nouveau or len(nouveau) < 4:
+            flash("Le nouveau mot de passe doit faire au moins 4 caracteres.", "danger")
+            return render_template("mot_de_passe.html")
+        if nouveau != nouveau2:
+            flash("Les mots de passe ne correspondent pas.", "danger")
+            return render_template("mot_de_passe.html")
+
+        db.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (generate_password_hash(nouveau), session["user_id"])
+        )
+        db.commit()
+        flash("Mot de passe modifie avec succes.", "success")
+        return redirect(url_for("index"))
+
+    return render_template("mot_de_passe.html")
+
+
 @app.route("/deconnexion")
 def deconnexion():
     session.clear()

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Changer le mot de passe - ALUPS-OPE{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-box">
+        <div class="card">
+            <div class="card-head">
+                <i class="bi bi-key"></i> Changer le mot de passe
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="field">
+                        <label class="label">Ancien mot de passe <span class="req">*</span></label>
+                        <input type="password" name="ancien" class="input" required autofocus>
+                    </div>
+                    <div class="field">
+                        <label class="label">Nouveau mot de passe <span class="req">*</span></label>
+                        <input type="password" name="nouveau" class="input" placeholder="Minimum 4 caracteres" required>
+                    </div>
+                    <div class="field">
+                        <label class="label">Confirmer le nouveau mot de passe <span class="req">*</span></label>
+                        <input type="password" name="nouveau2" class="input" required>
+                    </div>
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-check-lg"></i> Modifier
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
