@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ALUPS-OPE{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="topbar">
+        <a href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='BANNIERE-CD91-ALUPS-V2025.png') }}" alt="ALUPS" class="topbar-logo">
+        </a>
+        <div class="topbar-right">
+            <span class="topbar-tag">OPE</span>
+            {% if session.get('user_id') %}
+                {% if session.get('is_root') %}
+                    <a href="{{ url_for('admin') }}" class="btn btn-sm btn-outline" data-c="blue">
+                        <i class="bi bi-gear"></i> Admin
+                    </a>
+                {% endif %}
+                <a href="{{ url_for('deconnexion') }}" class="btn btn-sm btn-outline">
+                    <i class="bi bi-box-arrow-right"></i> {{ session.get('username') }}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div style="max-width:1160px;margin:1rem auto;padding:0 1.5rem;">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <i class="bi bi-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

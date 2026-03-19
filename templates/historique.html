@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Historique - ALUPS-OPE{% endblock %}
+
+{% block content %}
+<div class="admin-content">
+    <div class="admin-bar">
+        <h1><i class="bi bi-clock-history"></i> Historique des postes</h1>
+        <div class="topbar-right">
+            <a href="{{ url_for('nouveau') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Nouveau poste
+            </a>
+        </div>
+    </div>
+
+    <!-- Statut des templates -->
+    <div class="section">
+        <div class="section-head"><i class="bi bi-file-earmark"></i> Fichiers modeles</div>
+        {% set tpl_labels = {
+            'convention_2.docx': 'Convention (2 secouristes)',
+            'convention_4.docx': 'Convention (plus de 2 secouristes)',
+            'devisUPS.xlsx': 'Devis Paris-Saclay',
+            'devisNonUPS.xlsx': 'Devis hors Paris-Saclay'
+        } %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.5rem;">
+            {% for filename, ok in tpl_status.items() %}
+            <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.84rem;">
+                <i class="bi bi-{% if ok %}check-circle-fill st-ok{% else %}x-circle-fill st-warn{% endif %}" style="font-size:1rem;"></i>
+                <span style="font-weight:600;">{{ tpl_labels.get(filename, filename) }}</span>
+                <span style="color:var(--g400);font-size:0.78rem;">{{ filename }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Liste des postes -->
+    <div class="section">
+        <div class="section-head"><i class="bi bi-list-ul"></i> Postes enregistres</div>
+
+        {% if postes %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Intitule</th>
+                        <th>Statut</th>
+                        <th>Auteur</th>
+                        <th>Fichiers</th>
+                        <th>Modifie le</th>
+                        <th class="tr">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in postes %}
+                    {% set donnees = p.donnees | default('{}') %}
+                    {% set d = donnees if donnees is mapping else {} %}
+                    <tr class="row-link" onclick="window.location='{{ url_for('editer', poste_id=p.id) }}'">
+                        <td><span class="pill">{{ p.id }}</span></td>
+                        <td style="font-weight:600;">{{ p.nom or 'Sans nom' }}</td>
+                        <td>
+                            {% if p.statut == 'genere' %}
+                                <span class="detail-tag tag-green"><i class="bi bi-check"></i> Genere</span>
+                            {% else %}
+                                <span class="detail-tag tag-gray"><i class="bi bi-pencil"></i> Brouillon</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ p.auteur or '-' }}</td>
+                        <td class="tc">
+                            {% if p.nb_fichiers > 0 %}
+                                <span class="pill">{{ p.nb_fichiers }}</span>
+                            {% else %}
+                                <span style="color:var(--g400);">-</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size:0.82rem;color:var(--g500);">{{ p.updated_at[:16] if p.updated_at else '-' }}</td>
+                        <td class="tr">
+                            <div class="actions" onclick="event.stopPropagation();">
+                                <a href="{{ url_for('editer', poste_id=p.id) }}" class="btn btn-sm btn-outline" data-c="blue">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline" data-c="red" onclick="supprimerPoste({{ p.id }}, '{{ p.nom | e }}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            Aucun poste enregistre. Cliquez sur "Nouveau poste" pour commencer.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function supprimerPoste(id, nom) {
+    if (!confirm('Supprimer le poste "' + nom + '" et ses fichiers ?')) return;
+    fetch('{{ url_for("api_supprimer", poste_id=0) }}'.replace('/0', '/' + id), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(d => { if (d.success) location.reload(); })
+    .catch(e => alert('Erreur : ' + e));
+}
+</script>
+{% endblock %}

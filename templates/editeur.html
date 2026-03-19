@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}{% if poste %}Edition #{{ poste.id }}{% else %}Nouveau poste{% endif %} - ALUPS-OPE{% endblock %}
+
+{% block head %}
+<script>
+const TARIFS_PS = {{ tarifs_ps | tojson }};
+const TARIFS_NPS = {{ tarifs_nps | tojson }};
+const NB_SEC_PS = {{ nb_sec_values_ps | tojson }};
+const NB_SEC_NPS = {{ nb_sec_values_nps | tojson }};
+const POSTE_ID = {{ poste.id | tojson if poste else 'null' }};
+const DONNEES_INIT = {{ (poste.donnees if poste else '{}') | safe }};
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="admin-content">
+    <!-- Barre du haut -->
+    <div class="admin-bar">
+        <h1>
+            <i class="bi bi-{% if poste %}pencil-square{% else %}plus-circle{% endif %}"></i>
+            {% if poste %}Edition du poste #{{ poste.id }}{% else %}Nouveau poste{% endif %}
+        </h1>
+        <div class="topbar-right">
+            <a href="{{ url_for('index') }}" class="btn btn-outline"><i class="bi bi-arrow-left"></i> Historique</a>
+            <button class="btn btn-primary" id="btn-save" onclick="sauvegarder()">
+                <i class="bi bi-save"></i> Sauvegarder
+            </button>
+        </div>
+    </div>
+
+    <!-- Mode de saisie + Document source -->
+    <div class="admin-grid">
+        <div class="section">
+            <div class="section-head"><i class="bi bi-toggles"></i> Mode de saisie</div>
+            <div class="question">
+                <span class="question-text">Lecture automatique du document</span>
+                <div class="toggle">
+                    <input type="radio" name="mode" id="mode-auto" value="auto" checked>
+                    <label for="mode-auto" class="t-oui">Auto</label>
+                    <input type="radio" name="mode" id="mode-manual" value="manual">
+                    <label for="mode-manual" class="t-non">Manuel</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="section-upload">
+            <div class="section-head"><i class="bi bi-file-pdf"></i> Document source</div>
+            <label class="file-upload" id="file-upload-zone">
+                <i class="bi bi-cloud-upload"></i>
+                <span id="file-upload-text">Choisir un fichier PDF, DOC ou DOCX</span>
+                <input type="file" id="file-input" accept=".pdf,.doc,.docx">
+            </label>
+            <div id="extract-status" style="margin-top:0.5rem;display:none;">
+                <div class="alert alert-success" id="extract-success" style="display:none;"></div>
+                <div class="alert alert-danger" id="extract-error" style="display:none;"></div>
+            </div>
+            <button class="btn btn-primary" id="btn-extract" onclick="extraire()" style="margin-top:0.75rem;width:100%;" disabled>
+                <i class="bi bi-search"></i> Lire le document
+            </button>
+        </div>
+    </div>
+
+    <!-- Configuration DPS -->
+    <div class="section">
+        <div class="section-head"><i class="bi bi-sliders"></i> Configuration du DPS</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;">
+            <div class="question" style="padding:0;">
+                <span class="question-text">Poste Paris-Saclay</span>
+                <div class="toggle">
+                    <input type="radio" name="is_ps" id="ps-oui" value="OUI" onchange="onConfigChange()">
+                    <label for="ps-oui" class="t-oui">OUI</label>
+                    <input type="radio" name="is_ps" id="ps-non" value="NON" checked onchange="onConfigChange()">
+                    <label for="ps-non" class="t-non">NON</label>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label">Nb secouristes</label>
+                <select class="select" id="nb_sec" onchange="recalculer()">
+                </select>
+            </div>
+
+            <div class="question" style="padding:0;">
+                <span class="question-text">Secouristes pour</span>
+                <div class="toggle">
+                    <input type="radio" name="sec_type" id="sec-public" value="Public" checked>
+                    <label for="sec-public" class="t-oui">Public</label>
+                    <input type="radio" name="sec_type" id="sec-acteurs" value="Acteurs">
+                    <label for="sec-acteurs" class="t-non">Acteurs</label>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:1.5rem;align-items:center;">
+                <div>
+                    <span class="label">Effectif public</span>
+                    <span id="eff-public" style="font-weight:700;font-size:0.95rem;">-</span>
+                </div>
+                <div>
+                    <span class="label">Effectif acteurs</span>
+                    <span id="eff-acteurs" style="font-weight:700;font-size:0.95rem;">-</span>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label">Nb personnes attendues</label>
+                <input type="text" class="input" id="field-pbq" placeholder="Indique dans la convention">
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations convention -->
+    <div class="section">
+        <div class="section-head"><i class="bi bi-info-circle"></i> Informations de la convention</div>
+
+        <div class="fsec"><i class="bi bi-hash"></i> Convention</div>
+        <div class="fgrid">
+            <div class="field">
+                <label class="label">N. convention</label>
+                <input type="text" class="input" id="field-nps" placeholder="91-ALUPS-2XXX">
+            </div>
+        </div>
+
+        <div class="fdiv"></div>
+        <div class="fsec"><i class="bi bi-building"></i> Organisme demandeur</div>
+        <div class="fgrid">
+            <div class="field" style="grid-column:1/-1;">
+                <label class="label">Organisme</label>
+                <input type="text" class="input" id="field-org" placeholder="Nom de l'organisme">
+            </div>
+            <div class="field">
+                <label class="label">Representant</label>
+                <input type="text" class="input" id="field-rep" placeholder="Nom Prenom">
+            </div>
+            <div class="field">
+                <label class="label">Qualite / Fonction</label>
+                <input type="text" class="input" id="field-qlt" placeholder="Ex: President">
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+                <label class="label">Adresse</label>
+                <input type="text" class="input" id="field-adr" placeholder="Adresse complete">
+            </div>
+            <div class="field">
+                <label class="label">Telephone</label>
+                <input type="tel" class="input" id="field-tel" placeholder="06 XX XX XX XX">
+            </div>
+            <div class="field">
+                <label class="label">Email</label>
+                <input type="email" class="input" id="field-mel" placeholder="contact@example.fr">
+            </div>
+        </div>
+
+        <div class="fdiv"></div>
+        <div class="fsec"><i class="bi bi-calendar-event"></i> Manifestation</div>
+        <div class="fgrid">
+            <div class="field" style="grid-column:1/-1;">
+                <label class="label">Intitule</label>
+                <input type="text" class="input" id="field-int" placeholder="Nom de la manifestation">
+            </div>
+            <div class="field">
+                <label class="label">Date du poste</label>
+                <input type="text" class="input" id="field-dte" placeholder="JJ/MM/AAAA" onblur="recalculer()">
+            </div>
+            <div class="field">
+                <label class="label">Lieu</label>
+                <input type="text" class="input" id="field-loc" placeholder="Adresse de la manifestation">
+            </div>
+            <div class="field">
+                <label class="label">Heure de debut</label>
+                <input type="text" class="input" id="field-hde" placeholder="HH:MM" onblur="recalculer()">
+            </div>
+            <div class="field">
+                <label class="label">Heure de fin</label>
+                <input type="text" class="input" id="field-hfi" placeholder="HH:MM" onblur="recalculer()">
+            </div>
+        </div>
+
+        <div class="fdiv"></div>
+        <div class="fsec"><i class="bi bi-person-badge"></i> Contact sur place</div>
+        <div class="fgrid">
+            <div class="field">
+                <label class="label">Nom du contact</label>
+                <input type="text" class="input" id="field-contact_nom" placeholder="Nom">
+            </div>
+            <div class="field">
+                <label class="label">Tel du contact</label>
+                <input type="tel" class="input" id="field-contact_tel" placeholder="06 XX XX XX XX">
+            </div>
+        </div>
+    </div>
+
+    <!-- Calcul tarifaire + Journal -->
+    <div class="admin-grid">
+        <div class="section">
+            <div class="section-head"><i class="bi bi-calculator"></i> Calcul tarifaire</div>
+            <div class="detail-checks">
+                <div class="detail-check">
+                    <span>Duree</span>
+                    <span id="calc-duree" style="font-weight:700;">-</span>
+                </div>
+                <div class="detail-check">
+                    <span>Prix brut</span>
+                    <span id="calc-brut" style="font-weight:700;">-</span>
+                </div>
+                <div class="detail-check">
+                    <span>Remise 25%</span>
+                    <span id="calc-remise" style="font-weight:700;color:var(--g400);">Aucune</span>
+                </div>
+                <div class="detail-check">
+                    <span>Prix final</span>
+                    <span id="calc-final" style="font-weight:700;color:var(--blue);font-size:1.05rem;">-</span>
+                </div>
+                <div class="detail-check">
+                    <span>Date butoir</span>
+                    <span id="calc-butoir" style="font-weight:700;">-</span>
+                </div>
+            </div>
+            <button class="btn btn-outline" data-c="blue" onclick="recalculer()" style="margin-top:0.75rem;width:100%;">
+                <i class="bi bi-arrow-clockwise"></i> Recalculer
+            </button>
+        </div>
+
+        <div class="section">
+            <div class="section-head"><i class="bi bi-journal-text"></i> Journal</div>
+            <div id="log-box" style="font-family:'Consolas',monospace;font-size:0.82rem;background:var(--g50);border-radius:var(--radius-sm);padding:0.75rem;max-height:220px;overflow-y:auto;color:var(--g600);line-height:1.8;"></div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="section" style="text-align:center;">
+        <button class="btn btn-green" id="btn-generate" onclick="generer()" style="font-size:0.95rem;padding:0.7rem 2rem;">
+            <i class="bi bi-file-earmark-plus"></i> Generer Convention + Devis
+        </button>
+
+        {% if poste and fichiers %}
+        <div style="margin-top:1.25rem;">
+            <div class="fsec"><i class="bi bi-download"></i> Fichiers generes</div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;">
+                {% for f in fichiers %}
+                <a href="{{ url_for('telecharger', filename=f.chemin | replace(config.get('OUTPUT_DIR','output/'), '') ) }}"
+                   class="btn btn-outline" data-c="blue">
+                    <i class="bi bi-{% if f.type_fichier == 'convention' %}file-earmark-word{% else %}file-earmark-excel{% endif %}"></i>
+                    {{ f.nom_fichier }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div id="generated-files" style="margin-top:1rem;display:none;">
+            <div class="fsec"><i class="bi bi-download"></i> Fichiers generes</div>
+            <div id="generated-files-list" style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Champs caches pour les donnees d'extraction -->
+<input type="hidden" id="field-rep_legal" value="">
+<input type="hidden" id="field-qlt_legal" value="">
+<input type="hidden" id="field-effectif_public" value="">
+<input type="hidden" id="field-effectif_acteurs" value="">
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% endblock %}

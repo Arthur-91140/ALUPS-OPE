@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Administration - ALUPS-OPE{% endblock %}
+
+{% block content %}
+<div class="admin-content">
+    <div class="admin-bar">
+        <h1><i class="bi bi-gear"></i> Administration</h1>
+        <a href="{{ url_for('index') }}" class="btn btn-outline"><i class="bi bi-arrow-left"></i> Retour</a>
+    </div>
+
+    <div class="admin-grid">
+        <!-- Gestion des templates -->
+        <div class="section">
+            <div class="section-head"><i class="bi bi-file-earmark"></i> Fichiers modeles</div>
+
+            {% set tpl_labels = {
+                'convention_2.docx': 'Convention (2 sec.)',
+                'convention_4.docx': 'Convention (multi sec.)',
+                'devisUPS.xlsx': 'Devis Paris-Saclay',
+                'devisNonUPS.xlsx': 'Devis hors Paris-Saclay'
+            } %}
+
+            {% for filename, ok in tpl_status.items() %}
+            <div style="padding:0.65rem 0;{% if not loop.last %}border-bottom:1px solid var(--g100);{% endif %}">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <i class="bi bi-{% if ok %}check-circle-fill st-ok{% else %}x-circle-fill st-warn{% endif %}"></i>
+                        <span style="font-weight:600;font-size:0.88rem;">{{ tpl_labels.get(filename, filename) }}</span>
+                    </div>
+                    {% if ok %}
+                    <a href="{{ url_for('admin_download_template', filename=filename) }}" class="btn btn-sm btn-outline" title="Telecharger">
+                        <i class="bi bi-download"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                <form method="POST" action="{{ url_for('admin_upload_template') }}" enctype="multipart/form-data"
+                      style="display:flex;gap:0.4rem;align-items:center;">
+                    <input type="hidden" name="template_name" value="{{ filename }}">
+                    <input type="file" name="fichier" class="input input-sm" style="flex:1;" required
+                           accept=".docx,.xlsx">
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="bi bi-upload"></i> Remplacer
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Gestion des utilisateurs -->
+        <div class="section">
+            <div class="section-head"><i class="bi bi-people"></i> Utilisateurs</div>
+
+            <div class="table-wrap" style="margin-bottom:1rem;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Identifiant</th>
+                            <th>Role</th>
+                            <th>Cree le</th>
+                            <th class="tr">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td style="font-weight:600;">{{ u.username }}</td>
+                            <td>
+                                {% if u.is_root %}
+                                    <span class="detail-tag tag-green">ROOT</span>
+                                {% else %}
+                                    <span class="detail-tag tag-gray">Utilisateur</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-size:0.82rem;color:var(--g500);">{{ u.created_at[:10] if u.created_at else '-' }}</td>
+                            <td class="tr">
+                                {% if not u.is_root %}
+                                <form method="POST" action="{{ url_for('admin_supprimer_utilisateur', user_id=u.id) }}"
+                                      onsubmit="return confirm('Supprimer cet utilisateur ?');" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline" data-c="red">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="add-row">
+                <form method="POST" action="{{ url_for('admin_creer_utilisateur') }}" style="display:flex;gap:0.4rem;align-items:center;width:100%;">
+                    <input type="text" name="username" class="input input-sm" placeholder="Identifiant" required style="flex:1;">
+                    <input type="password" name="password" class="input input-sm" placeholder="Mot de passe" required style="flex:1;">
+                    <button type="submit" class="btn btn-sm btn-green">
+                        <i class="bi bi-person-plus"></i> Creer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

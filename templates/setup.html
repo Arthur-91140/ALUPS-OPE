@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Installation - ALUPS-OPE{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-box">
+        <div class="card">
+            <div class="card-head">
+                <i class="bi bi-shield-lock"></i> Premiere configuration
+            </div>
+            <div class="card-body">
+                <div class="auth-hint">
+                    Bienvenue dans ALUPS-OPE. Creez le compte administrateur (ROOT) pour commencer.
+                    Ce compte servira aussi de compte utilisateur.
+                </div>
+
+                <form method="POST">
+                    <div class="field">
+                        <label class="label">Identifiant <span class="req">*</span></label>
+                        <input type="text" name="username" class="input" placeholder="Votre identifiant" required autofocus>
+                    </div>
+                    <div class="field">
+                        <label class="label">Mot de passe <span class="req">*</span></label>
+                        <input type="password" name="password" class="input" placeholder="Minimum 4 caracteres" required>
+                    </div>
+                    <div class="field">
+                        <label class="label">Confirmer le mot de passe <span class="req">*</span></label>
+                        <input type="password" name="password2" class="input" placeholder="Retapez le mot de passe" required>
+                    </div>
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-check-lg"></i> Creer le compte ROOT
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

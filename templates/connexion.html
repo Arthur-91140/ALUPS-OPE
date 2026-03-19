@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Connexion - ALUPS-OPE{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-box">
+        <div class="card">
+            <div class="card-head">
+                <i class="bi bi-person"></i> Connexion
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="field">
+                        <label class="label">Identifiant</label>
+                        <input type="text" name="username" class="input" placeholder="Votre identifiant" required autofocus>
+                    </div>
+                    <div class="field">
+                        <label class="label">Mot de passe</label>
+                        <input type="password" name="password" class="input" placeholder="Votre mot de passe" required>
+                    </div>
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-box-arrow-in-right"></i> Se connecter
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
