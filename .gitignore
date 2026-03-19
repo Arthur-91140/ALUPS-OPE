@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+uploads/
+output/
+alups_ope.db
+.secret_key
+*.egg-info/
+dist/
+build/

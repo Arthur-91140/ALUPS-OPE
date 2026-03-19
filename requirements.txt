@@ -1,0 +1,7 @@
+flask
+gunicorn
+anthropic
+pymupdf
+python-docx
+docxtpl
+openpyxl
