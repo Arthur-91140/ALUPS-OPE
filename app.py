@@ -26,7 +26,7 @@ from werkzeug.utils import secure_filename
 # CONFIG
 # ═══════════════════════════════════════════════════════════════════════
 
-API_KEY = "PLACEHOLDER_REMOVED"
+API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 MODEL = "claude-haiku-4-5-20251001"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
