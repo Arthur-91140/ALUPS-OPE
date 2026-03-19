@@ -575,10 +575,19 @@ def editer(poste_id):
         flash("Poste introuvable.", "danger")
         return redirect(url_for("index"))
 
-    fichiers = db.execute(
+    fichiers_raw = db.execute(
         "SELECT * FROM fichiers_generes WHERE poste_id = ? ORDER BY created_at DESC",
         (poste_id,)
     ).fetchall()
+
+    fichiers = []
+    for f in fichiers_raw:
+        rel = os.path.relpath(f["chemin"], OUTPUT_DIR)
+        fichiers.append({
+            "nom_fichier": f["nom_fichier"],
+            "type_fichier": f["type_fichier"],
+            "url": url_for("telecharger", filename=rel),
+        })
 
     nb_sec_values_ps = sorted(TARIFS_PARIS_SACLAY.keys())
     nb_sec_values_nps = sorted(TARIFS_NON_PARIS_SACLAY.keys())

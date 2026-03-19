@@ -236,8 +236,7 @@ const DONNEES_INIT = {{ (poste.donnees if poste else '{}') | safe }};
             <div class="fsec"><i class="bi bi-download"></i> Fichiers generes</div>
             <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;">
                 {% for f in fichiers %}
-                <a href="{{ url_for('telecharger', filename=f.chemin | replace(config.get('OUTPUT_DIR','output/'), '') ) }}"
-                   class="btn btn-outline" data-c="blue">
+                <a href="{{ f.url }}" class="btn btn-outline" data-c="blue">
                     <i class="bi bi-{% if f.type_fichier == 'convention' %}file-earmark-word{% else %}file-earmark-excel{% endif %}"></i>
                     {{ f.nom_fichier }}
                 </a>
