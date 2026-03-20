@@ -52,10 +52,8 @@
                 </thead>
                 <tbody>
                     {% for p in postes %}
-                    {% set donnees = p.donnees | default('{}') %}
-                    {% set d = donnees if donnees is mapping else {} %}
                     <tr class="row-link" onclick="window.location='{{ url_for('editer', poste_id=p.id) }}'">
-                        <td><span class="pill">{{ p.id }}</span></td>
+                        <td><span class="pill">{{ p.nps or '-' }}</span></td>
                         <td style="font-weight:600;">{{ p.nom or 'Sans nom' }}</td>
                         <td>
                             {% if p.statut == 'genere' %}
