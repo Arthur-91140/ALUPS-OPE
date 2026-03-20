@@ -319,25 +319,42 @@ def fill_docx(tpl_path, out_path, ctx):
 
 
 def fill_xlsx(tpl_path, out_path, ctx):
+    import openpyxl
     import zipfile
-    # Manipulation directe du ZIP pour preserver les images
-    with zipfile.ZipFile(tpl_path, "r") as zin:
-        items = {}
-        for info in zin.infolist():
-            items[info.filename] = (zin.read(info.filename), info)
 
-    with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as zout:
-        for filename, (data, info) in items.items():
-            if filename == "xl/sharedStrings.xml" or filename.startswith("xl/worksheets/"):
-                text = data.decode("utf-8")
-                for key, val in ctx.items():
-                    safe = str(val) if val is not None else ""
-                    safe = safe.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                    for pat in [f"{{{{{key}}}}}", f"{{{{ {key} }}}}"]:
-                        text = text.replace(pat, safe)
-                zout.writestr(info, text.encode("utf-8"))
-            else:
-                zout.writestr(info, data)
+    # 1. Remplacement texte via openpyxl
+    wb = openpyxl.load_workbook(tpl_path)
+    for ws in wb:
+        for row in ws.iter_rows():
+            for cell in row:
+                if cell.value and isinstance(cell.value, str):
+                    v = cell.value
+                    for key, val in ctx.items():
+                        for pat in [f"{{{{{key}}}}}", f"{{{{ {key} }}}}"]:
+                            if pat in v:
+                                v = v.replace(pat, str(val) if val is not None else "")
+                    cell.value = v
+    wb.save(out_path)
+    wb.close()
+
+    # 2. Restaurer les fichiers perdus par openpyxl (images, dessins)
+    with zipfile.ZipFile(tpl_path, "r") as tpl_zip:
+        tpl_names = set(tpl_zip.namelist())
+        with zipfile.ZipFile(out_path, "r") as out_zip:
+            out_names = set(out_zip.namelist())
+
+        missing = tpl_names - out_names
+        if missing:
+            out_contents = {}
+            with zipfile.ZipFile(out_path, "r") as out_zip:
+                for name in out_zip.namelist():
+                    out_contents[name] = out_zip.read(name)
+            for name in missing:
+                out_contents[name] = tpl_zip.read(name)
+
+            with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as zout:
+                for name, data in out_contents.items():
+                    zout.writestr(name, data)
 
 
 # ═══════════════════════════════════════════════════════════════════════
