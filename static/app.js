@@ -22,10 +22,14 @@ function log(msg) {
 
 // ── Utilitaires de calcul (identiques au Python) ─────────────────────
 
+function parseHeure(s) {
+    return s.trim().split(/[h:]/i).map(Number);
+}
+
 function calcDuration(hde, hfi) {
     try {
-        const [h1, m1] = hde.trim().split(':').map(Number);
-        const [h2, m2] = hfi.trim().split(':').map(Number);
+        const [h1, m1] = parseHeure(hde);
+        const [h2, m2] = parseHeure(hfi);
         if (isNaN(h1) || isNaN(m1) || isNaN(h2) || isNaN(m2)) return 0;
         let delta = (h2 + m2 / 60) - (h1 + m1 / 60);
         if (delta <= 0) delta += 24;

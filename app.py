@@ -135,10 +135,14 @@ def format_date_short(d):
     return f"{d.day:02d} {MOIS_FR[d.month - 1]} {d.year}"
 
 
+def normalize_heure(s):
+    return re.sub(r'[hH]', ':', s.strip())
+
+
 def calc_duration(hde, hfi):
     try:
-        h1 = datetime.strptime(hde.strip(), "%H:%M")
-        h2 = datetime.strptime(hfi.strip(), "%H:%M")
+        h1 = datetime.strptime(normalize_heure(hde), "%H:%M")
+        h2 = datetime.strptime(normalize_heure(hfi), "%H:%M")
         delta = (h2 - h1).total_seconds() / 3600
         if delta <= 0:
             delta += 24
