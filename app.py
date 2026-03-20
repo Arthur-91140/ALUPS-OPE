@@ -136,7 +136,7 @@ def format_date_short(d):
 
 
 def normalize_heure(s):
-    return re.sub(r'[hH]', ':', s.strip())
+    return s.strip().replace('h', ':').replace('H', ':')
 
 
 def calc_duration(hde, hfi):
@@ -319,20 +319,25 @@ def fill_docx(tpl_path, out_path, ctx):
 
 
 def fill_xlsx(tpl_path, out_path, ctx):
-    import openpyxl
-    wb = openpyxl.load_workbook(tpl_path)
-    for ws in wb:
-        for row in ws.iter_rows():
-            for cell in row:
-                if cell.value and isinstance(cell.value, str):
-                    v = cell.value
-                    for key, val in ctx.items():
-                        for pat in [f"{{{{{key}}}}}", f"{{{{ {key} }}}}"]:
-                            if pat in v:
-                                v = v.replace(pat, str(val) if val is not None else "")
-                    cell.value = v
-    wb.save(out_path)
-    wb.close()
+    import zipfile
+    # Manipulation directe du ZIP pour preserver les images
+    with zipfile.ZipFile(tpl_path, "r") as zin:
+        items = {}
+        for info in zin.infolist():
+            items[info.filename] = (zin.read(info.filename), info)
+
+    with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as zout:
+        for filename, (data, info) in items.items():
+            if filename == "xl/sharedStrings.xml" or filename.startswith("xl/worksheets/"):
+                text = data.decode("utf-8")
+                for key, val in ctx.items():
+                    safe = str(val) if val is not None else ""
+                    safe = safe.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                    for pat in [f"{{{{{key}}}}}", f"{{{{ {key} }}}}"]:
+                        text = text.replace(pat, safe)
+                zout.writestr(info, text.encode("utf-8"))
+            else:
+                zout.writestr(info, data)
 
 
 # ═══════════════════════════════════════════════════════════════════════
