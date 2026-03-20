@@ -452,6 +452,18 @@ def root_required(f):
     return decorated
 
 
+def tarifs_to_json(grille):
+    """Convertit les cles int en string pour la serialisation JSON."""
+    return {
+        str(nb_sec): {str(k): v for k, v in tarifs.items()}
+        for nb_sec, tarifs in grille.items()
+    }
+
+
+TARIFS_PS_JSON = tarifs_to_json(TARIFS_PARIS_SACLAY)
+TARIFS_NPS_JSON = tarifs_to_json(TARIFS_NON_PARIS_SACLAY)
+
+
 def get_tpl_status():
     status = {}
     for name in [TPL_CONVENTION_2, TPL_CONVENTION_MULTI, TPL_DEVIS_UPS, TPL_DEVIS_NON_UPS]:
@@ -595,8 +607,8 @@ def nouveau():
         tpl_status=get_tpl_status(),
         nb_sec_values_ps=nb_sec_values_ps,
         nb_sec_values_nps=nb_sec_values_nps,
-        tarifs_ps=TARIFS_PARIS_SACLAY,
-        tarifs_nps=TARIFS_NON_PARIS_SACLAY,
+        tarifs_ps=TARIFS_PS_JSON,
+        tarifs_nps=TARIFS_NPS_JSON,
     )
 
 
@@ -632,8 +644,8 @@ def editer(poste_id):
         tpl_status=get_tpl_status(),
         nb_sec_values_ps=nb_sec_values_ps,
         nb_sec_values_nps=nb_sec_values_nps,
-        tarifs_ps=TARIFS_PARIS_SACLAY,
-        tarifs_nps=TARIFS_NON_PARIS_SACLAY,
+        tarifs_ps=TARIFS_PS_JSON,
+        tarifs_nps=TARIFS_NPS_JSON,
     )
 
 
