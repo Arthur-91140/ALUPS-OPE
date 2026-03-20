@@ -23,7 +23,7 @@ function log(msg) {
 // ── Utilitaires de calcul (identiques au Python) ─────────────────────
 
 function parseHeure(s) {
-    return s.trim().split(/[h:]/i).map(Number);
+    return s.trim().split(/h/i).map(Number);
 }
 
 function calcDuration(hde, hfi) {
@@ -257,8 +257,12 @@ function fillFields(data) {
     };
 
     for (const [fid, dkey] of Object.entries(fieldMap)) {
-        const val = data[dkey];
+        let val = data[dkey];
         if (val) {
+            // Convertir les heures : -> h
+            if (fid === 'hde' || fid === 'hfi') {
+                val = String(val).replace(':', 'h');
+            }
             const el = document.getElementById('field-' + fid);
             if (el) el.value = String(val);
         }
@@ -440,7 +444,9 @@ function restaurerDonnees() {
     fields.forEach(fid => {
         const el = document.getElementById('field-' + fid);
         if (el && d[fid] !== undefined && d[fid] !== null) {
-            el.value = String(d[fid]);
+            let val = String(d[fid]);
+            if (fid === 'hde' || fid === 'hfi') val = val.replace(':', 'h');
+            el.value = val;
         }
     });
 
